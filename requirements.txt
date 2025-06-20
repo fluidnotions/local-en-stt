@@ -1,0 +1,6 @@
+pyautogui
+sounddevice
+soundfile
+whisper
+pynput
+python-dotenv

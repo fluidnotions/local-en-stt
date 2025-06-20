@@ -39,3 +39,6 @@ python whisper_hotkey.py
 
 Press the configured hotkey, dictate your text, and it will be transcribed
 and typed into the active input field after basic formatting.
+
+The script automatically downloads the selected Whisper model if it's not
+already cached. Transcription is performed in English only.

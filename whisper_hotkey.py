@@ -14,7 +14,13 @@ HOTKEY = os.getenv("HOTKEY", "<cmd>+<shift>+t")
 MODEL_SIZE = os.getenv("WHISPER_MODEL", "small")
 RECORD_SECONDS = int(os.getenv("RECORD_SECONDS", "5"))
 
-model = whisper.load_model(MODEL_SIZE)
+def load_whisper_model(size: str) -> whisper.Whisper:
+    """Load the Whisper model, downloading it if necessary."""
+    print(f"Loading Whisper model '{size}' (download if missing)...")
+    return whisper.load_model(size)
+
+
+model = load_whisper_model(MODEL_SIZE)
 
 
 def post_process(text: str) -> str:
@@ -38,7 +44,7 @@ def record_audio(duration: int, sample_rate: int = 16000) -> str:
 
 
 def transcribe_file(path: str) -> str:
-    result = model.transcribe(path)
+    result = model.transcribe(path, language="en")
     return result["text"].strip()
 
 

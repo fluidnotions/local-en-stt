@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 import tempfile
 
@@ -13,6 +15,7 @@ load_dotenv()
 HOTKEY = os.getenv("HOTKEY", "<cmd>+<shift>+t")
 MODEL_SIZE = os.getenv("WHISPER_MODEL", "small")
 RECORD_SECONDS = int(os.getenv("RECORD_SECONDS", "5"))
+
 
 def load_whisper_model(size: str) -> whisper.Whisper:
     """Load the Whisper model, downloading it if necessary."""

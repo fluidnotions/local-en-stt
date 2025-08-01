@@ -43,8 +43,7 @@ DEFAULT_ENV = """
 WHISPER_MODEL=small
 
 # Post-processing configuration
-DEFAULT_FILLER_WORDS=um,uh,like,you know,I mean,actually,basically,literally
-CUSTOM_FILLER_WORDS=sort of,kind of,anyway
+FILLER_WORDS=um,uh,like,you know,I mean,actually,basically,literally,sort of,kind of,anyway
 WORD_REPLACEMENTS=gooey=gui
 CAPITALIZE_FIRST=true
 ADD_FINAL_PUNCTUATION=true
@@ -56,19 +55,16 @@ class TextProcessor:
         self.replacements = None
         self.add_punctuation = None
         self.capitalize_first = None
-        self.custom_fillers = None
-        self.default_fillers = None
+        self.filler_words = None
         self.reload_config()
 
     def reload_config(self):
         """Load text processing configuration from environment variables"""
-        # Get default filler words from .env or use built-in defaults
-        default_fillers = os.getenv("DEFAULT_FILLER_WORDS", "um, uh,like,you know,I mean,actually,basically,literally")
-        custom_fillers = os.getenv("CUSTOM_FILLER_WORDS", "")
+        # Get filler words from .env or use built-in defaults
+        fillers = os.getenv("FILLER_WORDS", "um,uh,like,you know,I mean,actually,basically,literally,sort of,kind of,anyway")
 
         # Parse filler words (comma-separated)
-        self.default_fillers = [word.strip() for word in default_fillers.split(",") if word.strip()]
-        self.custom_fillers = [word.strip() for word in custom_fillers.split(",") if word.strip()]
+        self.filler_words = [word.strip() for word in fillers.split(",") if word.strip()]
 
         # Get formatting settings
         self.capitalize_first = os.getenv("CAPITALIZE_FIRST", "true").lower() == "true"
@@ -102,12 +98,8 @@ class TextProcessor:
 
     def _remove_fillers(self, text):
         """Remove filler words from the text"""
-        # Combine default and custom filler words
-        filler_words = self.default_fillers.copy()
-        filler_words.extend(self.custom_fillers)
-
         # Process text for filler word removal
-        for filler in filler_words:
+        for filler in self.filler_words:
             # Prepare the pattern to match filler words case-insensitively
             # Note: Using regex with word boundaries to ensure we match whole filler phrases
             pattern = re.compile(r'\b' + re.escape(filler) + r'\b', re.IGNORECASE)

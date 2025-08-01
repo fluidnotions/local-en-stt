@@ -13,8 +13,6 @@ This project provides a Python application that uses OpenAI's Whisper model to d
 
 ## Installation
 
-### Option 1: Run from Source
-
 1. Install Python 3.9 or newer
 2. Install the required packages:
    ```bash
@@ -24,19 +22,6 @@ This project provides a Python application that uses OpenAI's Whisper model to d
    ```bash
    python whisper_hotkey.py
    ```
-
-### Option 2: Create an Executable
-
-1. Install PyInstaller:
-   ```bash
-   pip install pyinstaller
-   ```
-2. Create a standalone executable:
-   ```bash
-   pyinstaller --onefile --windowed whisper_hotkey.py
-   ```
-3. The executable will be created in the `dist` directory
-4. Double-click the executable to run it
 
 ## Usage
 
@@ -60,8 +45,7 @@ The app automatically creates a configuration file at `~/.WhisperHotkey/.env`. Y
 WHISPER_MODEL=small
 
 # Post-processing configuration
-DEFAULT_FILLER_WORDS=um,uh,like,you know,I mean,actually,basically,literally
-CUSTOM_FILLER_WORDS=sort of,kind of,anyway
+FILLER_WORDS=um,uh,like,you know,I mean,actually,basically,literally,sort of,kind of,anyway
 WORD_REPLACEMENTS=thier=their,youre=you're,wont=won't,cant=can't
 CAPITALIZE_FIRST=true
 ADD_FINAL_PUNCTUATION=true
@@ -73,8 +57,7 @@ ADD_FINAL_PUNCTUATION=true
 - `WHISPER_MODEL`: Choose model size (`tiny`, `base`, `small`, `medium`, or `large`)
 
 #### Text Processing
-- `DEFAULT_FILLER_WORDS`: Common filler words to remove (comma-separated)
-- `CUSTOM_FILLER_WORDS`: Additional filler words to remove
+- `FILLER_WORDS`: Filler words to remove from transcription (comma-separated)
 - `WORD_REPLACEMENTS`: Automatic word corrections in format `wrong=right`
 - `CAPITALIZE_FIRST`: Capitalize the first letter (`true`/`false`)
 - `ADD_FINAL_PUNCTUATION`: Add period if missing (`true`/`false`)
@@ -83,10 +66,9 @@ ADD_FINAL_PUNCTUATION=true
 
 ### Filler Word Removal
 
-Modify the default list or add your own:
+Customize the list of filler words to remove:
 ```
-DEFAULT_FILLER_WORDS=um,uh,hmm,like
-CUSTOM_FILLER_WORDS=sort of,kind of,you see
+FILLER_WORDS=um,uh,hmm,like,sort of,kind of,you see
 ```
 
 ### Word Replacement
@@ -114,4 +96,28 @@ ADD_FINAL_PUNCTUATION=false
 
 - Transcription is performed in English only
 - FP32 precision is used instead of FP16 for CPU compatibility
-- Configuration is stored separately from the executable for easy customization
+- Configuration is stored in the user's home directory for easy customization
+
+## Running at Startup (macOS)
+
+The application can be configured to start automatically when you log in to your Mac:
+
+1. The startup configuration has been set up with the following files:
+   - `/Users/justinrobinson/Documents/personal/local-en-tts/startup_whisper.sh`: A shell script that activates the conda environment and runs the application
+   - `/Users/justinrobinson/Library/LaunchAgents/com.justinrobinson.whisperhotkey.plist`: A LaunchAgent that runs the shell script at login
+
+2. The application will now start automatically when you log in to your Mac.
+
+3. Logs are stored in:
+   - `/Users/justinrobinson/Library/Logs/whisperhotkey.log`: Standard output
+   - `/Users/justinrobinson/Library/Logs/whisperhotkey.err`: Error messages
+
+4. To disable automatic startup:
+   ```bash
+   launchctl unload ~/Library/LaunchAgents/com.justinrobinson.whisperhotkey.plist
+   ```
+
+5. To enable automatic startup again:
+   ```bash
+   launchctl load ~/Library/LaunchAgents/com.justinrobinson.whisperhotkey.plist
+   ```

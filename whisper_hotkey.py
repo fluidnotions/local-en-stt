@@ -15,7 +15,6 @@ from pynput import keyboard
 
 load_dotenv()
 
-HOTKEY = os.getenv("HOTKEY", "<cmd>+<shift>+t")
 MODEL_SIZE = os.getenv("WHISPER_MODEL", "small")
 
 

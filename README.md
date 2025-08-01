@@ -46,7 +46,7 @@ This project provides a Python application that uses OpenAI's Whisper model to d
 4. Release the Ctrl key when done
 5. The transcribed text will be typed at your cursor position
 
-On first run, the app automatically:
+On the first run, the app automatically:
 - Creates a configuration folder in your home directory (`~/.WhisperHotkey`)
 - Generates a default configuration file
 - Downloads the selected Whisper model if not already cached
@@ -76,7 +76,7 @@ ADD_FINAL_PUNCTUATION=true
 - `DEFAULT_FILLER_WORDS`: Common filler words to remove (comma-separated)
 - `CUSTOM_FILLER_WORDS`: Additional filler words to remove
 - `WORD_REPLACEMENTS`: Automatic word corrections in format `wrong=right`
-- `CAPITALIZE_FIRST`: Capitalize first letter (`true`/`false`)
+- `CAPITALIZE_FIRST`: Capitalize the first letter (`true`/`false`)
 - `ADD_FINAL_PUNCTUATION`: Add period if missing (`true`/`false`)
 
 ## Customization Examples

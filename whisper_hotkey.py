@@ -3,8 +3,6 @@
 import os
 import re
 import tempfile
-import time
-import shutil
 import tkinter as tk
 from tkinter import scrolledtext
 from threading import Event, Thread
@@ -65,7 +63,7 @@ class TextProcessor:
     def reload_config(self):
         """Load text processing configuration from environment variables"""
         # Get default filler words from .env or use built-in defaults
-        default_fillers = os.getenv("DEFAULT_FILLER_WORDS", "um,uh,like,you know,I mean,actually,basically,literally")
+        default_fillers = os.getenv("DEFAULT_FILLER_WORDS", "um, uh,like,you know,I mean,actually,basically,literally")
         custom_fillers = os.getenv("CUSTOM_FILLER_WORDS", "")
 
         # Parse filler words (comma-separated)
@@ -108,18 +106,30 @@ class TextProcessor:
         filler_words = self.default_fillers.copy()
         filler_words.extend(self.custom_fillers)
 
-        # Replace filler words with an empty string
+        # Process text for filler word removal
         for filler in filler_words:
-            text = text.replace(f" {filler} ", " ")  # Remove fillers surrounded by spaces
-            text = text.replace(f" {filler}.", ".")  # Remove fillers followed by a period
-            text = text.replace(f" {filler},", ",")  # Remove fillers followed by a comma
-            # Handle case where filler starts the sentence
-            if text.lower().startswith(f"{filler} "):
+            # Prepare the pattern to match filler words case-insensitively
+            # Note: Using regex with word boundaries to ensure we match whole filler phrases
+            pattern = re.compile(r'\b' + re.escape(filler) + r'\b', re.IGNORECASE)
+
+            # Remove the filler words - including handling punctuation that might follow
+            text = pattern.sub('', text)
+
+            # Also handle the start of sentence case explicitly
+            if text.lower().startswith(filler.lower() + ' '):
                 text = text[len(filler) + 1:]
 
-        # Remove repeated spaces
+        # Clean up any resulting artifacts from removal
+        # Fix double spaces
         while "  " in text:
             text = text.replace("  ", " ")
+
+        # Fix spaces before punctuation
+        for punct in ['.', ',', '!', '?', ':', ';']:
+            text = text.replace(f" {punct}", punct)
+
+        # Fix leading spaces
+        text = text.strip()
 
         return text
 

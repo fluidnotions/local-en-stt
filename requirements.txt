@@ -1,6 +1,8 @@
-pyautogui
-sounddevice
-soundfile
-whisper
-pynput
-python-dotenv
+pyautogui~=0.9.54
+sounddevice~=0.5.2
+soundfile~=0.13.1
+whisper~=1.1.10
+pynput~=1.8.1
+python-dotenv~=1.1.0
+numpy~=1.26.4
+openai-whisper~=20240930

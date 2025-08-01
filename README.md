@@ -1,23 +1,59 @@
 # Local English Speech-to-Text
 
-This project provides a small Python script that uses OpenAI's Whisper model
-to dictate spoken English directly into the currently focused input field on
-macOS. The script listens for a keyboard shortcut defined in a `.env` file,
-records a short audio clip, transcribes it with Whisper, performs minimal
-cleanup, and types the resulting text.
+This project provides a Python application that uses OpenAI's Whisper model to dictate spoken English directly into the currently focused input field on macOS. The app listens for a keyboard shortcut, records a short audio clip, transcribes it with Whisper, performs configurable cleanup, and types the resulting text.
+
+## Features
+
+- Speech-to-text dictation with OpenAI's Whisper model
+- Automatic text formatting and cleanup
+- Customizable filler word removal
+- Word replacement for common transcription errors
+- Simple GUI with status display and logging
+- Configuration stored in user's home directory
 
 ## Installation
 
-1. Install Python 3.9 or newer.
-2. Install the required Python packages:
+### Option 1: Run from Source
 
-```bash
-pip install -r requirements.txt
-```
+1. Install Python 3.9 or newer
+2. Install the required packages:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Run the application:
+   ```bash
+   python whisper_hotkey.py
+   ```
+
+### Option 2: Create an Executable
+
+1. Install PyInstaller:
+   ```bash
+   pip install pyinstaller
+   ```
+2. Create a standalone executable:
+   ```bash
+   pyinstaller --onefile --windowed whisper_hotkey.py
+   ```
+3. The executable will be created in the `dist` directory
+4. Double-click the executable to run it
+
+## Usage
+
+1. The application opens with a GUI window showing status and logs
+2. Press and hold the left Ctrl key
+3. Speak your text
+4. Release the Ctrl key when done
+5. The transcribed text will be typed at your cursor position
+
+On first run, the app automatically:
+- Creates a configuration folder in your home directory (`~/.WhisperHotkey`)
+- Generates a default configuration file
+- Downloads the selected Whisper model if not already cached
 
 ## Configuration
 
-Create a `.env` file in the project directory. Example:
+The app automatically creates a configuration file at `~/.WhisperHotkey/.env`. You can edit this file directly or use the "Edit Configuration" button in the application.
 
 ```bash
 # Model configuration
@@ -31,78 +67,51 @@ CAPITALIZE_FIRST=true
 ADD_FINAL_PUNCTUATION=true
 ```
 
-### Model Configuration
-- `WHISPER_MODEL` selects the Whisper model size to load (`small` by default). Options include `tiny`, `base`, `small`, `medium`, and `large`.
+### Available Settings
 
-### Post-processing Configuration
-- `DEFAULT_FILLER_WORDS` is a comma-separated list of common filler words to be removed. You can modify this list to keep or remove specific default fillers.
-- `CUSTOM_FILLER_WORDS` is an optional comma-separated list of additional filler words to be removed.
-- `WORD_REPLACEMENTS` is a comma-separated list of word replacements in the format `wrong=right`. This helps correct commonly misrecognized words or add proper formatting (like apostrophes).
-- `CAPITALIZE_FIRST` when set to `true` (default), capitalizes the first letter of the transcribed text.
-- `ADD_FINAL_PUNCTUATION` when set to `true` (default), adds a period at the end of the text if no punctuation is present.
+#### Model Selection
+- `WHISPER_MODEL`: Choose model size (`tiny`, `base`, `small`, `medium`, or `large`)
 
-## Usage
+#### Text Processing
+- `DEFAULT_FILLER_WORDS`: Common filler words to remove (comma-separated)
+- `CUSTOM_FILLER_WORDS`: Additional filler words to remove
+- `WORD_REPLACEMENTS`: Automatic word corrections in format `wrong=right`
+- `CAPITALIZE_FIRST`: Capitalize first letter (`true`/`false`)
+- `ADD_FINAL_PUNCTUATION`: Add period if missing (`true`/`false`)
 
-Run the script:
-
-```bash
-python whisper_hotkey.py
-```
-
-Press and hold the left Ctrl key, dictate your text, and release the key when you're done.
-Your speech will be transcribed and typed into the active input field after basic formatting.
-
-The script automatically downloads the selected Whisper model if it's not
-already cached. Transcription is performed in English only.
-
-The script is configured to use FP32 precision (rather than FP16) to ensure compatibility with CPU-only systems.
-
-## Customizing Post-Processing
-
-You can customize how the transcribed text is processed by modifying the following settings in your `.env` file:
+## Customization Examples
 
 ### Filler Word Removal
 
-The script removes common filler words to produce cleaner transcriptions. You can customize this in two ways:
-
-1. Modify `DEFAULT_FILLER_WORDS` to change the built-in list of filler words:
-   ```
-   DEFAULT_FILLER_WORDS=um,uh,hmm,like
-   ```
-   Setting this to empty (`DEFAULT_FILLER_WORDS=`) will disable the default filler removal.
-
-2. Add your own custom filler words with `CUSTOM_FILLER_WORDS`:
-   ```
-   CUSTOM_FILLER_WORDS=sort of,kind of,you see
-   ```
+Modify the default list or add your own:
+```
+DEFAULT_FILLER_WORDS=um,uh,hmm,like
+CUSTOM_FILLER_WORDS=sort of,kind of,you see
+```
 
 ### Word Replacement
 
-You can define replacements for words that are commonly misrecognized by the model or need specific formatting:
-
+Define replacements for commonly misrecognized words:
 ```
 WORD_REPLACEMENTS=thier=their,youre=you're,api=API,commandline=command line
 ```
 
-Each replacement pair is in the format `wrong=right` and separated by commas. This feature is useful for:
-
-- Correcting common spelling errors in the transcription
-- Adding apostrophes that might be missing
+This is useful for:
+- Correcting common spelling errors
+- Adding missing apostrophes
 - Fixing technical terms or acronyms
 - Formatting domain-specific terminology
 
 ### Text Formatting
 
-You can control automatic text formatting:
+Control automatic formatting:
+```
+CAPITALIZE_FIRST=false
+ADD_FINAL_PUNCTUATION=false
+```
 
-- To disable automatic capitalization of the first letter:
-  ```
-  CAPITALIZE_FIRST=false
-  ```
+## Technical Notes
 
-- To disable automatic addition of a period at the end:
-  ```
-  ADD_FINAL_PUNCTUATION=false
-  ```
-
-This allows you to customize the output text according to your specific needs and preferences.
+- Transcription is performed in English only
+- FP32 precision is used instead of FP16 for CPU compatibility
+- Configuration is stored separately from the executable for easy customization

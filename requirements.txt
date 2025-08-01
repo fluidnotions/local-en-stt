@@ -6,3 +6,4 @@ pynput~=1.8.1
 python-dotenv~=1.1.0
 numpy~=1.26.4
 openai-whisper~=20240930
+# tkinter is part of the Python standard library, no need to install separately

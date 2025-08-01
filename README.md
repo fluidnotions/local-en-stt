@@ -20,14 +20,10 @@ pip install -r requirements.txt
 Create a `.env` file in the project directory. Example:
 
 ```bash
-HOTKEY=<cmd>+<shift>+t
 WHISPER_MODEL=small
-RECORD_SECONDS=5
 ```
 
-- `HOTKEY` sets the keyboard shortcut that triggers recording.
 - `WHISPER_MODEL` selects the Whisper model size to load (`small` by default).
-- `RECORD_SECONDS` controls how long to record when the hotkey is pressed.
 
 ## Usage
 
@@ -37,8 +33,8 @@ Run the script:
 python whisper_hotkey.py
 ```
 
-Press the configured hotkey, dictate your text, and it will be transcribed
-and typed into the active input field after basic formatting.
+Press and hold the left Ctrl key, dictate your text, and release the key when you're done.
+Your speech will be transcribed and typed into the active input field after basic formatting.
 
 The script automatically downloads the selected Whisper model if it's not
 already cached. Transcription is performed in English only.

@@ -2,7 +2,10 @@
 
 import os
 import tempfile
+import time
+from threading import Event, Thread
 
+import numpy
 import pyautogui
 import sounddevice as sd
 import soundfile as sf
@@ -14,7 +17,6 @@ load_dotenv()
 
 HOTKEY = os.getenv("HOTKEY", "<cmd>+<shift>+t")
 MODEL_SIZE = os.getenv("WHISPER_MODEL", "small")
-RECORD_SECONDS = int(os.getenv("RECORD_SECONDS", "5"))
 
 
 def load_whisper_model(size: str) -> whisper.Whisper:
@@ -36,14 +38,45 @@ def post_process(text: str) -> str:
     return text
 
 
-def record_audio(duration: int, sample_rate: int = 16000) -> str:
-    """Record audio from the microphone and save to a temporary WAV file."""
+def record_audio(sample_rate: int = 16000) -> str:
+    """Record audio from the microphone while left Ctrl key is held down."""
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
-        print(f"Recording for {duration} seconds...")
-        recording = sd.rec(int(duration * sample_rate), samplerate=sample_rate, channels=1)
-        sd.wait()
-        sf.write(tmp.name, recording, sample_rate)
-        return tmp.name
+        # Create a buffer to store audio data
+        audio_chunks = []
+        stop_event = Event()
+
+        # Function to collect audio data in chunks
+        def callback(indata, frames, time, status):
+            if status:
+                print(f"Error in audio recording: {status}")
+            audio_chunks.append(indata.copy())
+
+        # Start the recording stream
+        stream = sd.InputStream(samplerate=sample_rate, channels=1, callback=callback)
+        stream.start()
+
+        print("Recording while left Ctrl is held down...")
+
+        # Wait until left Ctrl is released
+        with keyboard.Events() as events:
+            for event in events:
+                if isinstance(event, keyboard.Events.Release) and event.key == keyboard.Key.ctrl_l:
+                    break
+
+        # Stop the recording stream
+        stream.stop()
+        stream.close()
+
+        # Combine all audio chunks and save to file
+        if audio_chunks:
+            recording = numpy.concatenate(audio_chunks, axis=0)
+            sf.write(tmp.name, recording, sample_rate)
+            print(f"Recorded {len(recording)/sample_rate:.2f} seconds of audio")
+            return tmp.name
+        else:
+            print("No audio recorded")
+            return ""
+
 
 
 def transcribe_file(path: str) -> str:
@@ -52,23 +85,31 @@ def transcribe_file(path: str) -> str:
 
 
 def on_activate():
-    print("Hotkey pressed. Listening...")
-    audio_path = record_audio(RECORD_SECONDS)
-    print("Transcribing...")
-    text = transcribe_file(audio_path)
-    os.remove(audio_path)
-    cleaned = post_process(text)
-    if cleaned:
-        print(f"Typing: {cleaned}")
-        pyautogui.typewrite(cleaned)
+    print("Left Ctrl pressed. Starting to record...")
+    audio_path = record_audio()
+    if audio_path and os.path.exists(audio_path):
+        print("Transcribing...")
+        text = transcribe_file(audio_path)
+        os.remove(audio_path)
+        cleaned = post_process(text)
+        if cleaned:
+            print(f"Typing: {cleaned}")
+            pyautogui.typewrite(cleaned)
+        else:
+            print("No speech detected.")
     else:
-        print("No speech detected.")
+        print("No audio file to transcribe.")
 
 
 def main() -> None:
-    print(f"Loaded whisper model '{MODEL_SIZE}' and waiting for hotkey '{HOTKEY}'.")
-    with keyboard.GlobalHotKeys({HOTKEY: on_activate}) as h:
-        h.join()
+    print(f"Loaded whisper model '{MODEL_SIZE}'")
+    print("Press and hold left Ctrl key to start recording. Release to stop and transcribe.")
+
+    # Listen for the left Ctrl key press
+    with keyboard.Listener(
+        on_press=lambda key: on_activate() if key == keyboard.Key.ctrl_l else None
+    ) as listener:
+        listener.join()
 
 
 if __name__ == "__main__":

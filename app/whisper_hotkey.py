@@ -3,8 +3,8 @@
 import os
 import re
 import tempfile
+import argparse
 import tkinter as tk
-from tkinter import scrolledtext
 from threading import Event, Thread
 from pathlib import Path
 from queue import Queue
@@ -17,15 +17,20 @@ import whisper
 from dotenv import load_dotenv
 from pynput import keyboard
 
-# Create a message queue for GUI output
+# Import UI implementations
+from .ui.ui_interface import WhisperHotkeyUI
+from .ui.gui_implementation import WhisperHotkeyGUI
+from .ui.terminal_implementation import WhisperHotkeyTerminal
+
+# Create a message queue for UI output
 message_queue = Queue()
 
 # Store original print function
 original_print = print
 
-# Custom print function that logs to both console and GUI
+# Custom print function that logs to both console and UI
 def log_message(message):
-    """Send message to both console and GUI."""
+    """Send message to both console and UI."""
     original_print(message)
     message_queue.put(message)
 
@@ -159,94 +164,7 @@ def init_app_config():
     else:
         print(f"Using existing configuration: {ENV_FILE}")
 
-# GUI application for displaying logs
-class WhisperHotkeyGUI:
-    def __init__(self, root):
-        self.root = root
-        self.root.title(f"{APP_NAME} - Speech-to-Text Tool")
-        self.root.geometry("700x400")
-        self.root.minsize(500, 300)
-
-        # Create a frame for the log display
-        frame = tk.Frame(root)
-        frame.pack(fill="both", expand=True, padx=10, pady=10)
-
-        # Status label
-        self.status_label = tk.Label(frame, text="Ready. Press and hold left Ctrl to record.")
-        self.status_label.pack(side="top", fill="x", pady=(0, 10))
-
-        # Create a scrolled text widget for logs
-        self.log_display = scrolledtext.ScrolledText(frame, wrap="word")
-        self.log_display.pack(fill="both", expand=True)
-        self.log_display.config(state="disabled")
-
-        # Create a frame for buttons
-        button_frame = tk.Frame(root)
-        button_frame.pack_configure(fill="x", padx=10, pady=10)
-
-        # Button to open a configuration file
-        self.config_button = tk.Button(
-            button_frame, 
-            text="Edit Configuration", 
-            command=self.open_config_file
-        )
-        self.config_button.pack(side="left", padx=5)
-
-        # Status indicator
-        self.status_indicator = tk.Label(
-            button_frame,
-            text="⚪ Idle",
-            font=("Arial", 10)
-        )
-        self.status_indicator.pack(side="right", padx=5)
-
-        # Start polling for messages
-        self.poll_messages()
-
-    def poll_messages(self):
-        """Check for new messages in the queue and update the display."""
-        try:
-            while not message_queue.empty():
-                message = message_queue.get_nowait()
-                self.update_log(message)
-        except Exception as e:
-            self.update_log(f"Error polling messages: {e}")
-
-        # Schedule the next poll
-        self.root.after(100, self.poll_messages)
-
-    def update_log(self, message):
-        """Add a message to the log display."""
-        self.log_display.config(state="normal")
-        self.log_display.insert("end", f"{message}\n")
-        self.log_display.see("end")  # Scroll to bottom
-        self.log_display.config(state="disabled")
-
-    def update_status(self, status):
-        """Update the status indicator."""
-        self.status_label.config(text=status)
-
-        if "recording" in status.lower():
-            self.status_indicator.config(text="🔴 Recording", fg="red")
-        elif "transcribing" in status.lower():
-            self.status_indicator.config(text="🔄 Processing", fg="blue")
-        else:
-            self.status_indicator.config(text="⚪ Idle", fg="black")
-
-    def open_config_file(self):
-        """Open the configuration file for editing."""
-        print(f"Opening configuration file: {ENV_FILE}")
-        try:
-            # On macOS, use the 'open' command
-            if os.name == 'posix':
-                os.system(f"open {ENV_FILE}")
-            # On Windows, use the default editor
-            elif os.name == 'nt':
-                os.system(f"start {ENV_FILE}")
-            else:
-                print(f"Please manually edit the config file at: {ENV_FILE}")
-        except Exception as e:
-            print(f"Error opening config file: {e}")
+# The WhisperHotkeyGUI class has been moved to gui_implementation.py
 
 def load_whisper_model(size: str) -> whisper.Whisper:
     """Load the Whisper model, downloading it if necessary."""
@@ -329,9 +247,22 @@ def on_activate(text_processor):
         if hasattr(app, 'update_status'):
             app.update_status("No audio recorded. Press and hold left Ctrl to try again.")
 
+def parse_arguments():
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(description=f"{APP_NAME} - Speech-to-Text Tool")
+    parser.add_argument(
+        "--terminal", 
+        action="store_true", 
+        help="Run in terminal mode instead of GUI mode"
+    )
+    return parser.parse_args()
+
 def main() -> None:
     """Main application entry point"""
     global app, model
+
+    # Parse command line arguments
+    args = parse_arguments()
 
     # Initialize the app configuration
     init_app_config()
@@ -353,9 +284,14 @@ def main() -> None:
     print(f"Loaded Whisper model '{model_size}'")
     print("Press and hold left Ctrl key to start recording. Release to stop and transcribe.")
 
-    # Create the GUI
-    root = tk.Tk()
-    app = WhisperHotkeyGUI(root)
+    # Create the appropriate UI implementation based on arguments
+    if args.terminal:
+        print("Running in terminal mode")
+        app = WhisperHotkeyTerminal(APP_NAME, ENV_FILE)
+    else:
+        print("Running in GUI mode")
+        # Create the GUI implementation
+        app = WhisperHotkeyGUI(APP_NAME, ENV_FILE)
 
     # Start a keyboard listener in a separate thread
     listener = keyboard.Listener(
@@ -364,8 +300,8 @@ def main() -> None:
     listener.daemon = True
     listener.start()
 
-    # Start the GUI main loop
-    root.mainloop()
+    # Start the UI
+    app.start()
 
 if __name__ == "__main__":
     main()

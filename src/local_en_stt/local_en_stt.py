@@ -1,14 +1,10 @@
-#!/usr/bin/env python3
-
+"""Main module."""
 import os
 import re
 import tempfile
 import argparse
-import tkinter as tk
-from threading import Event, Thread
-from pathlib import Path
+from threading import Event
 from queue import Queue
-
 import numpy
 import pyautogui
 import sounddevice as sd
@@ -17,10 +13,9 @@ import whisper
 from dotenv import load_dotenv
 from pynput import keyboard
 
-# Import UI implementations
-from .ui.ui_interface import WhisperHotkeyUI
-from .ui.gui_implementation import WhisperHotkeyGUI
-from .ui.terminal_implementation import WhisperHotkeyTerminal
+from src.local_en_stt.ui.gui_implementation import WhisperHotkeyGUI
+from src.local_en_stt.ui.terminal_implementation import WhisperHotkeyTerminal
+from src.local_en_stt.utils.file_utils import FileUtils
 
 # Create a message queue for UI output
 message_queue = Queue()
@@ -39,7 +34,7 @@ print = log_message
 
 # App configuration
 APP_NAME = "WhisperHotkey"
-APP_DIR = Path.home() / f".{APP_NAME}"
+APP_DIR = FileUtils.project_root() / f".{APP_NAME}"
 ENV_FILE = APP_DIR / ".env"
 
 # Default environment configuration
@@ -251,8 +246,8 @@ def parse_arguments():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description=f"{APP_NAME} - Speech-to-Text Tool")
     parser.add_argument(
-        "--terminal", 
-        action="store_true", 
+        "--terminal",
+        action="store_true",
         help="Run in terminal mode instead of GUI mode"
     )
     return parser.parse_args()
@@ -285,7 +280,8 @@ def main() -> None:
     print("Press and hold left Ctrl key to start recording. Release to stop and transcribe.")
 
     # Create the appropriate UI implementation based on arguments
-    if args.terminal:
+    ui_mode = os.getenv("UI_MODE", "terminal")
+    if ui_mode == "terminal":
         print("Running in terminal mode")
         app = WhisperHotkeyTerminal(APP_NAME, ENV_FILE)
     else:
